@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset = "utf-8">
+      <style type="text/css">
+        *{
+                box-sizing: border-box;
+                font-family: Perpetua;
+            }
+            nav             { font-weight: bold;
+                           color: white;
+                           border: 2px solid RoyalBlue;
+                           text-align: center;
+                           width: 25%;
+                           background-color: RoyalBlue;
+                            float:left;}
+            nav:hover{
+                background-color: gold;
+                color: black;
+            }
+            nav ul          { display: none;
+                            list-style: none;
+                            text-align: center;
+                            border: 2px solid RoyalBlue;
+                            width:25%;
+                            margin: 0;
+                            padding:0;
+                            position: absolute;}
+            nav:hover ul    { display: block; }
+            nav ul li       { border-top: 2px solid royalblue;
+                            background-color: white;
+                           
+                            color: black; }
+            nav ul li:hover { background-color: PowderBlue; 
+                              color:firebrick;
+                              font-weight: bold;  
+                            }
+            a{
+                text-decoration: none;
+            }
+            div table{
+                border: 1px solid;
+                padding: 10;
+                font-size: 36px;
+                text-shadow: -4px 4px 6px dimgray;
+            }
+            div table tr td{
+                border: 1px solid;
+                width: 10%;
+            }
+            @media screen and (max-width:650px){
+                nav{
+                    float:initial;
+                }
+                ul{
+                    width:100%;
+                    position: relative;
+                }
+            }
+        </style>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+        <script>
+            function reset(){
+                $("#display").html("")
+            }
+            function showData(data){
+                let $table=$(document.createElement('table'));
+                for(let i=0;i<data.length;i++){
+                    let $tr=$(document.createElement('tr'));
+                    for(let j=0;j<data[i].length;j++){
+                        let $td=$(document.createElement('td'));
+                        $td.text(data[i][j]);
+                        $tr.append($td);
+                    }
+                    $table.append($tr)
+                }
+                $("#display").append($table)
+            }
+            function getGraph(){
+                let data=[["ID","name","classify","2D3D"]/*,["1","2","3","4"]*/];
+                //一次append一個1*4的row
+                //todo 傳資料到data
+                //
+                //
+                reset()
+                showData(data);
+            }
+            function getFormula(){
+                let data=[["name","request","domain_min","domain_max"]];
+                reset()
+                showData(data)
+            }
+            function getDetail(){
+                let data=[["name","X","Y","Z","request1","request2","request3","detailLink"]];
+                //request先暫定3個 需要再加 不然排版很醜
+                reset()
+                showData(data)
+            }
+            /*function getAll(){  有bug
+                getGraph()
+                $("#display").append($(document.createElement('hr')))
+                getDetail()
+                $("#display").append($(document.createElement('hr')))
+                getFormula()
+            }*/
+
+        </script>
+   </head>
+   <body>
+    <nav>
+        查詢當前表格
+        <ul>
+            <!--li onclick="getAll()">顯示全部</li-->
+            <li onclick="getGraph()">GraphRecord</li>
+            <li onclick="getDetail()">ClassifyDetail</li>
+            <li onclick="getFormula()">Formula</li>
+        </ul>
+    </nav>
+    <nav>
+        搜尋圖形定義
+    </nav>
+    <nav>
+        修改資料
+        <ul>
+            <li>GraphRecord</li>
+            <li>ClassifyDetail</li>
+            <li>Formula</li>
+         </ul>
+    </nav>
+    <nav>
+        參考資料
+        <ul>
+            <li><a href="https://zh.wikipedia.org/wiki/%E5%B9%BE%E4%BD%95%E5%9C%96%E5%BD%A2">幾何圖形</a></li>
+            <li><a href="https://www.cnblogs.com/Anita9002/p/4380146.html">OpenGL</a></li>
+            
+         </ul>
+    </nav>
+    <hr>
+    <div id="display"></div>
+   </body>
+</html>
