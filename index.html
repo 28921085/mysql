@@ -128,6 +128,19 @@
                 let $table=$(document.createElement('table'));
                 for(let i=0;i<data.length;i++){
                     let $tr=$(document.createElement('tr'));
+                    if(i){
+                        let $td=$(document.createElement('td'))
+                        $('<input>').attr({
+                            type:'button',
+                            id:i.toString(),
+                            value:'刪除此橫行'
+                        }).appendTo($td);
+                        $tr.append($td);
+                    }
+                    else{
+                        let $td=$(document.createElement('td'))
+                        $tr.append($td)
+                    }
                     for(let j=0;j<data[i].length;j++){
                         let $td=$(document.createElement('td'));
                         if(i){
@@ -149,6 +162,25 @@
                     }
                     $table.append($tr)
                 }
+                let $tr=$(document.createElement('tr'));
+                for(let i=0;i<=data[0].length;i++){
+                    let $td=$(document.createElement('td'));
+                    if(i){
+                        $('<input>').attr({
+                                type:'text',
+                                id:i.toString()
+                            }).appendTo($td);
+                    }
+                    else{
+                        $('<input>').attr({
+                            type:'button',
+                            id:i.toString(),
+                            value:'新增此橫行'
+                        }).appendTo($td);
+                    }
+                    $tr.append($td);
+                }
+                $table.append($tr);
                 $("#display").append($table)
             }
             function modifyGraph(){
