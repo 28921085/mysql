@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html>
    <head>
-      <meta charset = "utf-8">
+      
+      <meta http-equiv='Content-type' content='text/html'; charset='utf-8'>
+        <meta http-equiv="Pragma" Content="No-cache">
       <style type="text/css">
         *{
                 box-sizing: border-box;
@@ -74,10 +76,49 @@
         </style>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
         <script>
+            let type;
             function reset(){
                 $("#display").html("")
             }
-            function showData(data){
+            function showData(dat){
+                let data;
+                if(type=="getGraphRecord"){
+                    data=[["ID","name","classify","2D3D"]];
+                    for(let i=0;i<dat.length;i++){
+                        let tmp=[];
+                        tmp.push(dat[i]['ID'])
+                        tmp.push(dat[i]['name'])
+                        tmp.push(dat[i]['classify'])
+                        tmp.push(dat[i]['2D3D'])
+                        data.push(tmp)
+                    }
+                }
+                else if(type=="getFormula"){
+                    data=[["name","request","domain_min","domain_max"]];
+                    for(let i=0;i<dat.length;i++){
+                        let tmp=[];
+                        tmp.push(dat[i]['name'])
+                        tmp.push(dat[i]['request'])
+                        tmp.push(dat[i]['domain_min'])
+                        tmp.push(dat[i]['domain_max'])
+                        data.push(tmp)
+                    }
+                }
+                else if(type=="getClassifyDetail"){
+                    data=[["name","X","Y","Z","request1","request2","request3","detailLink"]]
+                    for(let i=0;i<dat.length;i++){
+                        let tmp=[];
+                        tmp.push(dat[i]['name'])
+                        tmp.push(dat[i]['X'])
+                        tmp.push(dat[i]['Y'])
+                        tmp.push(dat[i]['Z'])
+                        tmp.push(dat[i]['request1'])
+                        tmp.push(dat[i]['request2'])
+                        tmp.push(dat[i]['request3'])
+                        tmp.push(dat[i]['detailLink'])
+                        data.push(tmp)
+                    }
+                }
                 let $table=$(document.createElement('table'));
                 for(let i=0;i<data.length;i++){
                     let $tr=$(document.createElement('tr'));
@@ -90,27 +131,32 @@
                 }
                 $("#display").append($table)
             }
+            function get_from_mysql(str){
+                const limit = {"limit":5};
+                const dbParam = JSON.stringify(limit);
+                let data;
+                xmlhttp = new XMLHttpRequest();
+                xmlhttp.open("GET",str+".php?x=" + dbParam);
+                xmlhttp.send();
+                type=str
+                xmlhttp.onload = function() {
+                    data=JSON.parse(unescape(this.responseText));
+                    showData(data);
+                }
+            }
             function getGraph(){
-                let data=[["ID","name","classify","2D3D"]/*,["1","2","3","4"]*/];
-                //一次append一個1*4的row
-                //todo 傳資料到data
-                //
-                //
                 reset()
-                showData(data);
+                get_from_mysql("getGraphRecord");
             }
             function getFormula(){
                 let data=[["name","request","domain_min","domain_max"]];
-                //todo 傳資料到data
                 reset()
-                showData(data)
+                get_from_mysql("getFormula");
             }
             function getDetail(){
                 let data=[["name","X","Y","Z","request1","request2","request3","detailLink"]];
-                //request先暫定3個 需要再加 不然排版很醜
-                //todo 傳資料到data
                 reset()
-                showData(data)
+                get_from_mysql("getClassifyDetail");
             }
             /*function getAll(){  有bug
                 getGraph()
@@ -201,7 +247,6 @@
                 //TODO data = get from database 以上為暫定data
                 showInput(data);
             }
-
         </script>
    </head>
    <body >
@@ -235,5 +280,6 @@
     </nav>
     <hr>
     <div id="display"></div>
+    <div id="1"></div>
    </body>
 </html>
