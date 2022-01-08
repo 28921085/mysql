@@ -1,11 +1,24 @@
+
 <!DOCTYPE html>
+<?php
+        error_reporting(0);
+        ini_set('display_errors', 0);
+            //連接資料庫
+            include_once "hw3.php";
+            
+        ?>
 <html>
    <head>
-      <meta charset = "utf-8">
+      
+      <meta http-equiv='Content-type' content='text/html'; charset='utf-8'>
+        <meta http-equiv="Pragma" Content="No-cache">
       <style type="text/css">
         *{
                 box-sizing: border-box;
                 font-family: Perpetua;
+            }
+            body{          background-color:#EEFFEE
+            
             }
             nav             { font-weight: bold;
                            color: white;
@@ -56,14 +69,68 @@
                     width:100%;
                     position: relative;
                 }
+                input[type=text]{
+                    width:30px;
+                }
+            }
+            @media screen and (max-width:1200px){
+                input[type=text]{
+                    width:50px;
+                }
+                table td{
+                    font-size: 16px;
+                }
             }
         </style>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
         <script>
+            let type;
             function reset(){
                 $("#display").html("")
             }
             function showData(data){
+                let data;
+                if(type=="getGraphRecord"){
+                    data=[["ID","name","classify","2D3D"]];
+                    $query = ("select * from works");
+            $stmt =  $db->prepare($query);
+            $error=$stmt->execute();
+            $result = $stmt->fetchAll();
+                    for(let i=0;i<data.length;i++){
+                        let tmp=[];
+                        tmp.push(data[i]['ID'])
+                        tmp.push(data[i]['name'])
+                        tmp.push(data[i]['classify'])
+                        tmp.push(data[i]['2D3D'])
+                        data.push(tmp)
+                    }
+                }
+                else if(type=="getFormula"){
+                    data=[["name","request","domain_min","domain_max"]];
+                    for(let i=0;i<data.length;i++){
+                        let tmp=[];
+                        tmp.push(data[i]['name'])
+                        tmp.push(data[i]['request'])
+                        tmp.push(data[i]['domain_min'])
+                        tmp.push(data[i]['domain_max'])
+                        data.push(tmp)
+                    }
+                }
+                else if(type=="getClassifyDetail"){
+                    data=[["name","X","Y","Z","request1","request2","request3","detailLink"]]
+                    for(let i=0;i<data.length;i++){
+                        let tmp=[];
+                        tmp.push(data[i]['name'])
+                        tmp.push(data[i]['X'])
+                        tmp.push(data[i]['Y'])
+                        tmp.push(data[i]['Z'])
+                        tmp.push(data[i]['request1'])
+                        tmp.push(data[i]['request2'])
+                        tmp.push(data[i]['request3'])
+                        tmp.push(data[i]['detailLink'])
+                        data.push(tmp)
+                    }
+                }
                 let $table=$(document.createElement('table'));
                 for(let i=0;i<data.length;i++){
                     let $tr=$(document.createElement('tr'));
@@ -76,25 +143,32 @@
                 }
                 $("#display").append($table)
             }
+            function get_from_mysql(str){
+                const limit = {"limit":5};
+                const dbParam = JSON.stringify(limit);
+                let data;
+                xmlhttp = new XMLHttpRequest();
+                xmlhttp.open("GET",str+".php?x=" + dbParam);
+                xmlhttp.send();
+                type=str
+                xmlhttp.onload = function() {
+                    data=JSON.parse(unescape(this.responseText));
+                    showData(data);
+                }
+            }
             function getGraph(){
-                let data=[["ID","name","classify","2D3D"]/*,["1","2","3","4"]*/];
-                //一次append一個1*4的row
-                //todo 傳資料到data
-                //
-                //
                 reset()
-                showData(data);
+                get_from_mysql("getGraphRecord");
             }
             function getFormula(){
                 let data=[["name","request","domain_min","domain_max"]];
                 reset()
-                showData(data)
+                get_from_mysql("getFormula");
             }
             function getDetail(){
                 let data=[["name","X","Y","Z","request1","request2","request3","detailLink"]];
-                //request先暫定3個 需要再加 不然排版很醜
                 reset()
-                showData(data)
+                get_from_mysql("getClassifyDetail");
             }
             /*function getAll(){  有bug
                 getGraph()
@@ -103,10 +177,91 @@
                 $("#display").append($(document.createElement('hr')))
                 getFormula()
             }*/
-
+            function modify(ID){
+                console.log(ID)
+                //todo modify data
+                //decode ex:ID=102 mean 1 row 2 col
+            }
+            function showInput(data){
+                let $table=$(document.createElement('table'));
+                for(let i=0;i<data.length;i++){
+                    let $tr=$(document.createElement('tr'));
+                    if(i){
+                        let $td=$(document.createElement('td'))
+                        $('<input>').attr({
+                            type:'button',
+                            id:i.toString(),
+                            value:'刪除此橫行'
+                        }).appendTo($td);
+                        $tr.append($td);
+                    }
+                    else{
+                        let $td=$(document.createElement('td'))
+                        $tr.append($td)
+                    }
+                    for(let j=0;j<data[i].length;j++){
+                        let $td=$(document.createElement('td'));
+                        if(i){
+                            let ID=i*100+j;
+                            $('<input>').attr({
+                                type:'text',
+                                id:ID.toString()
+                            }).appendTo($td);
+                            $('<input>').attr({
+                                type:'button',
+                                value:'修改',
+                                onclick:'modify('+ID.toString()+')'
+                            }).appendTo($td);
+                            $('<span>'+data[i][j]+'</span>').appendTo($td);
+                        }
+                        else
+                            $td.text(data[i][j]);
+                        $tr.append($td);
+                    }
+                    $table.append($tr)
+                }
+                let $tr=$(document.createElement('tr'));
+                for(let i=0;i<=data[0].length;i++){
+                    let $td=$(document.createElement('td'));
+                    if(i){
+                        $('<input>').attr({
+                                type:'text',
+                                id:i.toString()
+                            }).appendTo($td);
+                    }
+                    else{
+                        $('<input>').attr({
+                            type:'button',
+                            id:i.toString(),
+                            value:'新增此橫行'
+                        }).appendTo($td);
+                    }
+                    $tr.append($td);
+                }
+                $table.append($tr);
+                $("#display").append($table)
+            }
+            function modifyGraph(){
+                reset()
+                let data=[["ID","name","classify","2D3D"],["1","2","3","4"]];
+                //TODO data = get from database 以上為暫定data
+                showInput(data);
+            }
+            function modifyDetail(){
+                reset()
+                let data=[["name","X","Y","Z","request1","request2","request3","detailLink"],["1","2","3","4","30678","87","666","7777"]];
+                //TODO data = get from database 以上為暫定data
+                showInput(data);
+            }
+            function modifyFormula(){
+                reset()
+                let data=[["ID","name","classify","2D3D"],["1","2","3","4"]];
+                //TODO data = get from database 以上為暫定data
+                showInput(data);
+            }
         </script>
    </head>
-   <body>
+   <body >
     <nav>
         查詢當前表格
         <ul>
@@ -122,9 +277,9 @@
     <nav>
         修改資料
         <ul>
-            <li>GraphRecord</li>
-            <li>ClassifyDetail</li>
-            <li>Formula</li>
+            <li onclick="modifyGraph()">GraphRecord</li>
+            <li onclick="modifyDetail()">ClassifyDetail</li>
+            <li onclick="modifyFormula()">Formula</li>
          </ul>
     </nav>
     <nav>
@@ -137,5 +292,6 @@
     </nav>
     <hr>
     <div id="display"></div>
+    <div id="1"></div>
    </body>
 </html>
