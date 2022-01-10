@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      
+      <meta http-equiv='Content-type' content='text/html'; charset='utf-8'>
+        <meta http-equiv="Pragma" Content="No-cache">
+      <style type="text/css">
+        *{
+                box-sizing: border-box;
+                font-family: Perpetua;
+            }
+            body{          background-color:#EEFFEE
+            
+            }
+            nav             { font-weight: bold;
+                           color: white;
+                           border: 2px solid RoyalBlue;
+                           text-align: center;
+                           width: 25%;
+                           background-color: RoyalBlue;
+                            float:left;}
+            nav:hover{
+                background-color: gold;
+                color: black;
+            }
+            nav ul          { display: none;
+                            list-style: none;
+                            text-align: center;
+                            border: 2px solid RoyalBlue;
+                            width:25%;
+                            margin: 0;
+                            padding:0;
+                            position: absolute;}
+            nav:hover ul    { display: block; }
+            nav ul li       { border-top: 2px solid royalblue;
+                            background-color: white;
+                           
+                            color: black; }
+            nav ul li:hover { background-color: PowderBlue; 
+                              color:firebrick;
+                              font-weight: bold;  
+                            }
+            a{
+                text-decoration: none;
+            }
+            div table{
+                border: 1px solid;
+                padding: 10;
+                font-size: 36px;
+                text-shadow: -4px 4px 6px dimgray;
+            }
+            div table tr td{
+                border: 1px solid;
+                width: 10%;
+            }
+            @media screen and (max-width:650px){
+                nav{
+                    float:initial;
+                }
+                ul{
+                    width:100%;
+                    position: relative;
+                }
+                input[type=text]{
+                    width:30px;
+                }
+            }
+            @media screen and (max-width:1200px){
+                input[type=text]{
+                    width:50px;
+                }
+                table td{
+                    font-size: 16px;
+                }
+            }
+        </style>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+        <script>
+            let chooseToSearch
+            let type;
+            function reset(){
+                $("#display").html("")
+                $('#total').html("")
+            }
+            function get_total(which){
+                const dbParam = JSON.stringify({"limit":10});
+                const xmlhttp = new XMLHttpRequest();
+                xmlhttp.onload = function() {
+                    //攔截錯誤訊息
+                    $("#total").html("共計"+ this.responseText+"筆")
+                } 
+                let str="style=count&input1=&input2=&input3="
+                if(which==0){
+                    xmlhttp.open("POST", "changeGraphRecord.php");
+                    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    xmlhttp.send(str);
+                }
+                else if(which==1){
+                    xmlhttp.open("POST", "changeFormula.php");
+                    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    xmlhttp.send(str);
+                }
+                else if(which==2){
+                    xmlhttp.open("POST", "changeClassifyDetail.php");
+                    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    xmlhttp.send(str);
+                }
+                
+            }
+            function showData(dat){
+                let data;
+                if(type=="getGraphRecord"){
+                    data=[["ID","name","classify","2D3D"]];
+                    for(let i=0;i<dat.length;i++){
+                        let tmp=[];
+                        tmp.push(dat[i]['ID'])
+                        tmp.push(dat[i]['name'])
+                        tmp.push(dat[i]['classify'])
+                        tmp.push(dat[i]['2D3D'])
+                        data.push(tmp)
+                    }
+                }
+                else if(type=="getFormula"){
+                    data=[["name","request","domain_min","domain_max"]];
+                    for(let i=0;i<dat.length;i++){
+                        let tmp=[];
+                        tmp.push(dat[i]['name'])
+                        tmp.push(dat[i]['request'])
+                        tmp.push(dat[i]['domain_min'])
+                        tmp.push(dat[i]['domain_max'])
+                        data.push(tmp)
+                    }
+                }
+                else if(type=="getClassifyDetail"){
+                    data=[["name","X","Y","Z","request1","request2","request3","detailLink"]]
+                    for(let i=0;i<dat.length;i++){
+                        let tmp=[];
+                        tmp.push(dat[i]['name'])
+                        tmp.push(dat[i]['X'])
+                        tmp.push(dat[i]['Y'])
+                        tmp.push(dat[i]['Z'])
+                        tmp.push(dat[i]['request1'])
+                        tmp.push(dat[i]['request2'])
+                        tmp.push(dat[i]['request3'])
+                        tmp.push(dat[i]['detailLink'])
+                        data.push(tmp)
+                    }
+                }
+                let $table=$(document.createElement('table'));
+                for(let i=0;i<data.length;i++){
+                    let $tr=$(document.createElement('tr'));
+                    for(let j=0;j<data[i].length;j++){
+                        let $td=$(document.createElement('td'));
+                        if(type=="getClassifyDetail"&&j==7&&i){
+                            let $a=$('<a>').attr({
+                                href:data[i][j] ,
+                                target:'_blank'   
+                            })
+                            $a.html(data[i][j])
+                            $a.appendTo($td)
+                        }
+                        else{
+                            $td.text(data[i][j]);
+                        }
+                        $tr.append($td);
+                    }
+                    $table.append($tr)
+                }
+                $("#display").append($table)
+                if(type=="getGraphRecord"){
+                    get_total(0)
+                }
+                else if(type=="getFormula"){
+                    get_total(1)
+                }
+                else if(type=="getClassifyDetail"){
+                    get_total(2)
+                }
+                
+            }
+           
+            function get_from_mysql(str,typ){//type 0=查 1=刪AND改
+                const limit = {"limit":5};
+                const dbParam = JSON.stringify(limit);
+                let data;
+                xmlhttp = new XMLHttpRequest();
+                xmlhttp.open("GET",str+".php?x=" + dbParam);
+                xmlhttp.send();
+                type=str
+                xmlhttp.onload = function() {
+                    data=JSON.parse(unescape(this.responseText));
+                    if(typ==1)
+                        showInput(data)
+                    else if(typ==0)
+                        showData(data);
+                    else if(typ==2)
+                        select_search(data);
+                }
+            }
+            function getGraph(){
+                reset()
+                get_from_mysql("getGraphRecord",0);
+            }
+            function getFormula(){
+                reset()
+                get_from_mysql("getFormula",0);
+            }
+            function getDetail(){
+                reset()
+                get_from_mysql("getClassifyDetail",0);
+            }
+            let Gmodify,Fmodify,Cmodify
+            function modify(which,ID){//改其中一格
+                const dbParam = JSON.stringify({"limit":10});
+                const xmlhttp = new XMLHttpRequest();
+                xmlhttp.onload = function() {
+                    //攔截錯誤訊息
+                    if(this.responseText.length>10)
+                        window.alert("操作失敗")
+                } 
+                let add=document.getElementById(ID).value
+                if(which==0){
+                    xmlhttp.open("POST", "changeGraphRecord.php");
+                    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    let str=Gmodify[ID]+add+"&input3="
+                    console.log(str)
+                    xmlhttp.send(str);
+                    modifyGraph();
+                }
+                else if(which==1){
+                    xmlhttp.open("POST", "changeFormula.php");
+                    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    let str=Fmodify[ID]+add
+                    console.log(Fmodify.length)
+                    console.log(str)
+                    xmlhttp.send(str);
+                    modifyFormula();
+                }
+                else if(which==2){
+                    xmlhttp.open("POST", "changeClassifyDetail.php");
+                    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    let str=Cmodify[ID]+add+"&input3="
+                    console.log(str)
+                    xmlhttp.send(str);
+                    modifyDetail();
+                }
+            }
+            let Gdeleterow,Fdeleterow,Cdeleterow;
+            function delete_a_row(which,index){
+                const dbParam = JSON.stringify({"limit":10});
+                const xmlhttp = new XMLHttpRequest();
+                xmlhttp.onload = function() {
+                    //攔截錯誤訊息
+                    if(this.responseText.length>10)
+                        window.alert("操作失敗")
+                }
+                if(which==0){
+                    xmlhttp.open("POST", "changeGraphRecord.php");
+                    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    let str=Gdeleterow[index]
+                    console.log(str)
+                    xmlhttp.send(str);
+                    modifyGraph();
+                }
+                else if(which==1){
+                    xmlhttp.open("POST", "changeFormula.php");
+                    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    let str=Fdeleterow[index]
+                    console.log(str)
+                    xmlhttp.send(str);
+                    modifyFormula();
+                }
+                else if(which==2){
+                    xmlhttp.open("POST", "changeClassifyDetail.php");
+                    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    let str=Cdeleterow[index]
+                    console.log(str)
+                    xmlhttp.send(str);
+                    modifyDetail();
+                }
+            }
+            function addrow(which,len){
+                let str=""
+                for(let i=0;i<len;i++){
+                    if(i)
+                        str+="#"
+                    str+=document.getElementById("add"+i.toString()).value
+                }
+                const dbParam = JSON.stringify({"limit":10});
+                const xmlhttp = new XMLHttpRequest();
+                xmlhttp.onload = function() {
+                    //攔截錯誤訊息
+                    if(this.responseText.length>10)
+                        window.alert("操作失敗")
+                }
+                if(which==0){
+                    xmlhttp.open("POST", "changeGraphRecord.php");
+                    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    str="style=add&input1="+str+"&input2=&input3="
+                    console.log(str)
+                    xmlhttp.send(str);
+                    modifyGraph();
+                }
+                else if(which==1){
+                    xmlhttp.open("POST", "changeFormula.php");
+                    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    str="style=add&input1="+str+"&input2=&input3="
+                    console.log(str)
+                    xmlhttp.send(str);
+                    modifyFormula();
+                }
+                else if(which==2){
+                    xmlhttp.open("POST", "changeClassifyDetail.php");
+                    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    str="style=add&input1="+str+"&input2=&input3="
+                    console.log(str)
+                    xmlhttp.send(str);
+                    modifyDetail();
+                }
+            }
+            function showInput(dat){
+                let data
+                if(type=="getGraphRecord"){
+                    data=[["ID","name","classify","2D3D"]];
+                    for(let i=0;i<dat.length;i++){
+                        let tmp=[];
+                        tmp.push(dat[i]['ID'])
+                        tmp.push(dat[i]['name'])
+                        tmp.push(dat[i]['classify'])
+                        tmp.push(dat[i]['2D3D'])
+                        data.push(tmp)
+                    }
+                }
+                else if(type=="getFormula"){
+                    data=[["name","request","domain_min","domain_max"]];
+                    for(let i=0;i<dat.length;i++){
+                        let tmp=[];
+                        tmp.push(dat[i]['name'])
+                        tmp.push(dat[i]['request'])
+                        tmp.push(dat[i]['domain_min'])
+                        tmp.push(dat[i]['domain_max'])
+                        data.push(tmp)
+                    }
+                }
+                else if(type=="getClassifyDetail"){
+                    data=[["name","X","Y","Z","request1","request2","request3","detailLink"]]
+                    for(let i=0;i<dat.length;i++){
+                        let tmp=[];
+                        tmp.push(dat[i]['name'])
+                        tmp.push(dat[i]['X'])
+                        tmp.push(dat[i]['Y'])
+                        tmp.push(dat[i]['Z'])
+                        tmp.push(dat[i]['request1'])
+                        tmp.push(dat[i]['request2'])
+                        tmp.push(dat[i]['request3'])
+                        tmp.push(dat[i]['detailLink'])
+                        data.push(tmp)
+                    }
+                }
+                let $table=$(document.createElement('table'));
+                Gdeleterow=[],Cdeleterow=[],Fdeleterow=[],Gmodify=[],Cmodify=[],Fmodify=[]
+                for(let i=0;i<data.length;i++){
+                    let $tr=$(document.createElement('tr'));
+                    if(i){
+                        let $td=$(document.createElement('td'))
+                        if(type=="getGraphRecord"){
+                            let tmpstr="style=all&input1="+data[i][0]+"&input2="+data[i][1]+"&input3="
+                            $('<input>').attr({
+                                type:'button',
+                                value:'刪除此橫行',
+                                onclick:'delete_a_row(0,'+(i-1).toString()+')'
+                            }).appendTo($td);  
+                            Gdeleterow.push(tmpstr) 
+                        }
+                        else if(type=="getFormula"){
+                            let tmpstr="style=all&input1="+data[i][0]+"&input2="+data[i][1]+"&input3=0"
+                            $('<input>').attr({
+                                type:'button',
+                                value:'刪除此橫行',
+                                onclick:'delete_a_row(1,'+(i-1).toString()+')'
+                            }).appendTo($td);
+                            Fdeleterow.push(tmpstr) 
+                        }
+                        else if(type=="getClassifyDetail"){
+                            let tmpstr="style=all&input1="+data[i][0]+"&input2=0&input3=0"
+                            $('<input>').attr({
+                                type:'button',
+                                value:'刪除此橫行',
+                                onclick:'delete_a_row(2,'+(i-1).toString()+')'
+                            }).appendTo($td);
+                            Cdeleterow.push(tmpstr)
+                        }
+                        $tr.append($td);
+                    }
+                    else{
+                        let $td=$(document.createElement('td'))
+                        $tr.append($td)
+                    }
+                    for(let j=0;j<data[i].length;j++){
+                        let $td=$(document.createElement('td'));
+                        if(i){
+                            let ID=(i-1)*data[i].length+j;//hash
+                            $('<input>').attr({
+                                type:'text',
+                                id:ID.toString()
+                            }).appendTo($td);
+                            if(type=="getGraphRecord"){
+                                let tmpstr="style="+data[0][j]+"&input1="+data[i][0]+"&input2="
+                                $('<input>').attr({
+                                    type:'button',
+                                    value:'修改',
+                                    onclick:'modify(0,'+ID.toString()+')'
+                                }).appendTo($td);
+                                Gmodify.push(tmpstr)
+                            }
+                            else if(type=="getFormula"){
+                                let tmpstr="style="+data[0][j]+"&input1="+data[i][0]+"&input2="+data[i][1]+"&input3="
+                                $('<input>').attr({
+                                    type:'button',
+                                    value:'修改',
+                                    onclick:'modify(1,'+ID.toString()+')'
+                                }).appendTo($td);
+                                Fmodify.push(tmpstr)
+                            }
+                            else if(type=="getClassifyDetail"){
+                                let tmpstr="style="+data[0][j]+"&input1="+data[i][0]+"&input2="
+                                $('<input>').attr({
+                                    type:'button',
+                                    value:'修改',
+                                    onclick:'modify(2,'+ID.toString()+')'
+                                }).appendTo($td);
+                                Cmodify.push(tmpstr)
+                            }
+                            $('<span>'+data[i][j]+'</span>').appendTo($td);
+                        }
+                        else
+                            $td.text(data[i][j]);
+                        $tr.append($td);
+                    }
+                    $table.append($tr)
+                }
+                let $tr=$(document.createElement('tr'));
+                for(let i=0;i<=data[0].length;i++){
+                    let $td=$(document.createElement('td'));
+                    if(i){
+                        $('<input>').attr({
+                            type:'text',
+                            id:"add"+(i-1).toString()
+                        }).appendTo($td);
+                    }
+                    else{
+                        if(type=="getGraphRecord"){
+                            $('<input>').attr({
+                                type:'button',
+                                value:'新增此橫行',
+                                onclick:'addrow(0,'+data[0].length+')'
+                            }).appendTo($td);
+                        }
+                        else if(type=="getFormula"){
+                            $('<input>').attr({
+                                type:'button',
+                                value:'新增此橫行',
+                                onclick:'addrow(1,'+data[0].length+')'
+                            }).appendTo($td);
+                        }
+                        else if(type=="getClassifyDetail"){
+                            $('<input>').attr({
+                                type:'button',
+                                value:'新增此橫行',
+                                onclick:'addrow(2,'+data[0].length+')'
+                            }).appendTo($td);
+                        }
+                    }
+                    $tr.append($td);
+                }
+                $table.append($tr);
+                $("#display").append($table)
+            }
+            function modifyGraph(){
+                reset()
+                get_from_mysql("getGraphRecord",1);
+            }
+            function modifyDetail(){
+                reset()
+                get_from_mysql("getClassifyDetail",1);
+            }
+            function modifyFormula(){
+                reset()
+                get_from_mysql("getFormula",1);
+            }
+            function join_display(){
+                const dbParam = JSON.stringify({"limit":10});
+                const xmlhttp = new XMLHttpRequest();
+                xmlhttp.onload = function() {
+                    //回傳圖形定義(join)
+                    let $show=$('#total')
+                    $('<p>').html(chooseToSearch+"的詳細資訊:").appendTo($show)
+                    let data=JSON.parse(unescape(this.responseText));
+                    let $table=$('<table>')
+                    let $tmp=$('<tr>')
+                    $('<td>').html('ID').appendTo($tmp);
+                    $('<td>').html('name').appendTo($tmp);
+                    $('<td>').html('classify').appendTo($tmp);
+                    $('<td>').html('2D3D').appendTo($tmp);
+                    $('<td>').html('X').appendTo($tmp);
+                    $('<td>').html('Y').appendTo($tmp);
+                    $('<td>').html('Z').appendTo($tmp);
+                    $('<td>').html('request1').appendTo($tmp);
+                    $('<td>').html('request2').appendTo($tmp);
+                    $('<td>').html('request3').appendTo($tmp);
+                    $('<td>').html('detailLink').appendTo($tmp);
+                    $tmp.appendTo($table)
+                    for(let i=0;i<data.length;i++){
+                        let $tr=$('<tr>')
+                        $('<td>').html(data[i]['ID']).appendTo($tr)
+                        $('<td>').html(data[i]['name']).appendTo($tr) 
+                        $('<td>').html(data[i]['classify']).appendTo($tr)
+                        $('<td>').html(data[i]['2D3D']).appendTo($tr)
+                        $('<td>').html(data[i]['X']).appendTo($tr)
+                        $('<td>').html(data[i]['Y']).appendTo($tr)
+                        $('<td>').html(data[i]['Z']).appendTo($tr)
+                        $('<td>').html(data[i]['request1']).appendTo($tr)
+                        $('<td>').html(data[i]['request2']).appendTo($tr)
+                        $('<td>').html(data[i]['request3']).appendTo($tr)
+                        $('<a>').attr({
+                            href:data[i]['detailLink'],
+                            target:'_blank'
+                            }).html(data[i]['detailLink']).appendTo($('<td>')).appendTo($tr)                                                   
+                        $tr.appendTo($table)
+                    }
+                    $table.appendTo($show)
+                } 
+                let str="style="+chooseToSearch
+                xmlhttp.open("POST", "join.php");
+                xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                xmlhttp.send(str);
+            }
+            function searchGraphDefine(){
+                const dbParam = JSON.stringify({"limit":10});
+                const xmlhttp = new XMLHttpRequest();
+                xmlhttp.onload = function() {
+                    //回傳圖形定義
+                    $('#total').html("")
+                    let $show=$('#total')
+                    $('<p>').html(chooseToSearch+"的圖形定義:").appendTo($show)
+                    let data=JSON.parse(unescape(this.responseText));
+                    let $table=$('<table>')
+                    let $tmp=$('<tr>')
+                    $('<td>').html('request').appendTo($tmp)
+                    $('<td>').html('domain_min').appendTo($tmp)
+                    $('<td>').html('domain_max').appendTo($tmp)
+                    $tmp.appendTo($table)
+                    for(let i=0;i<data.length;i++){
+                        let $tr=$('<tr>')
+                        $('<td>').html(data[i]['request']).appendTo($tr)
+                        $('<td>').html(data[i]['domain_min']).appendTo($tr)
+                        $('<td>').html(data[i]['domain_max']).appendTo($tr)
+                        $tr.appendTo($table)
+                    }
+                    $table.appendTo($show)
+                    join_display()
+                } 
+                let str="style="+chooseToSearch
+                xmlhttp.open("POST", "search.php");
+                xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                xmlhttp.send(str);
+            }
+            function changesearch(data){
+                chooseToSearch=data
+            }
+            function select_search(data){
+                let $select=$('<select>').attr({
+                    required:true,
+                    onchange:"changesearch(this.options[this.options.selectedIndex].text)"
+                })
+                $('<option>').attr({}).html("請選擇").appendTo($select)
+                for(let i=0;i<data.length;i++){
+                    let str=data[i]['name']
+                    let $opt=$('<option>').attr({
+                        value:str
+                    })
+                    $opt.html(str)
+                    $select.append($opt);
+                }
+                $select.appendTo($('#display'));
+                $('<input>').attr({
+                    value:"搜尋",
+                    type:'button',
+                    onclick:'searchGraphDefine()'
+                }).appendTo($('#display'));
+            }
+            function graphDefine(){
+                reset()
+                get_from_mysql("getGraphRecord",2)
+            }
+        </script>
+   </head>
+   <body >
+    <nav>
+        查詢當前表格
+        <ul>
+            <li onclick="getGraph()">GraphRecord</li>
+            <li onclick="getDetail()">ClassifyDetail</li>
+            <li onclick="getFormula()">Formula</li>
+        </ul>
+    </nav>
+    <nav onclick='graphDefine()'>
+        搜尋圖形定義
+    </nav>
+    <nav>
+        修改資料
+        <ul>
+            <li onclick="modifyGraph()">GraphRecord</li>
+            <li onclick="modifyDetail()">ClassifyDetail</li>
+            <li onclick="modifyFormula()">Formula</li>
+         </ul>
+    </nav>
+    <nav>
+        參考資料
+        <ul>
+            <li><a href="https://zh.wikipedia.org/wiki/%E5%B9%BE%E4%BD%95%E5%9C%96%E5%BD%A2">幾何圖形</a></li>
+            <li><a href="https://www.cnblogs.com/Anita9002/p/4380146.html">OpenGL</a></li>
+            
+         </ul>
+    </nav>
+    <hr>
+    <div id="display"></div>
+    <div id="total"></div>
+   </body>
+</html>
